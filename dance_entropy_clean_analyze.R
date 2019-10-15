@@ -75,20 +75,21 @@ write_csv(df_clean, "joint_entropy.csv",na = "NA")
 write_csv(df_analyze, "joint_entropy_grouped.csv")
 
 # GRAPHING SECTION #
-
+# Left Knee Flexion
 lt_knee_plt <- ggplot(df_analyze, aes(
   x = Dance_Type,
   y = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean`,
   fill = Group )) + 
-  geom_col(position = "dodge", color = "black") +
-  geom_errorbar(aes(ymin = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean`,
+  geom_col(position = "dodge", color = "black") + # black gives the bars an outline. Dodge separates instead of default stack
+  geom_errorbar(aes(ymin = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean`, # ymin = mean, then there is no downward error bar
                 ymax = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean` + df_analyze$`SamEn_Knee-LT-Flexion (deg)_sd`),
                 position = "dodge") +
   labs(title = "Mean SamEn of LT Knee Flexion", x = "Dance Types", y = "Mean SamEn") +
-  theme_classic() +
-  scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")) +
+  theme_classic() + # gets rid of background lines
+  scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")) + # default colors at KSU
   ylim(0,0.2)
 
+# Right Knee Flexion
 rt_knee_plt <- ggplot(df_analyze, aes(
   x = Dance_Type,
   y = df_analyze$`SamEn_Knee-RT-Flexion (deg)_mean`,
@@ -102,6 +103,7 @@ rt_knee_plt <- ggplot(df_analyze, aes(
   scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")) +
   ylim(0,0.2)
 
+# Left Hip Flexion
 lt_hip_plt <- ggplot(df_analyze, aes(
   x = Dance_Type,
   y = df_analyze$`SamEn_Hip-LT-Flexion (deg)_mean`,
@@ -115,6 +117,7 @@ lt_hip_plt <- ggplot(df_analyze, aes(
   scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")) +
   ylim(0,0.2)
 
+# Right Hip Flexion
 rt_hip_plt <- ggplot(df_analyze, aes(
   x = Dance_Type,
   y = df_analyze$`SamEn_Hip-RT-Flexion (deg)_mean`,
