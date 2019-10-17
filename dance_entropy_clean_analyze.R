@@ -74,8 +74,6 @@ glimpse(df_analyze)
 
 # 4. GRAPHING SECTION ####
 
-<<<<<<< HEAD
-
 # KSU Theme: unify the design
 ksu_theme = list(
   geom_col(position = position_dodge(0.9), color = "black"),
@@ -86,15 +84,11 @@ ksu_theme = list(
   ylim(0,0.15)
   )
 
-=======
-# GRAPHING SECTION #
 # Left Knee Flexion
->>>>>>> 85e306533de6e472714e25b681113db8af4dea6e
 lt_knee_plt <- ggplot(df_analyze, aes(
   x = Dance_Type,
   y = df_analyze$`ApEn_Knee-LT-Flexion (deg)_mean`,
   fill = Group )) + 
-<<<<<<< HEAD
   ggtitle("Mean ApEn of LT Knee Flexion") +
   geom_errorbar(aes(ymin = df_analyze$`ApEn_Knee-LT-Flexion (deg)_mean`,
                     ymax = df_analyze$`ApEn_Knee-LT-Flexion (deg)_mean` + df_analyze$`ApEn_Knee-LT-Flexion (deg)_sd`),
@@ -103,7 +97,7 @@ lt_knee_plt <- ggplot(df_analyze, aes(
   ksu_theme
 
 lt_knee_plt
-=======
+
   geom_col(position = "dodge", color = "black") + # black gives the bars an outline. Dodge separates instead of default stack
   geom_errorbar(aes(ymin = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean`, # ymin = mean, then there is no downward error bar
                 ymax = df_analyze$`SamEn_Knee-LT-Flexion (deg)_mean` + df_analyze$`SamEn_Knee-LT-Flexion (deg)_sd`),
@@ -112,7 +106,6 @@ lt_knee_plt
   theme_classic() + # gets rid of background lines
   scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")) + # default colors at KSU
   ylim(0,0.2)
->>>>>>> 85e306533de6e472714e25b681113db8af4dea6e
 
 # Right Knee Flexion
 rt_knee_plt <- ggplot(df_analyze, aes(
@@ -390,8 +383,3 @@ leveneTest(df_pd$`ApEn_Hip-RT-Flexion (deg)` ~ df_pd$Dance_Type) # NS, checks ou
 # Test of Normality
 plot(df_pd_lt_k.aov, 2) # Most points fall along straight reference line, checks out
 df_pd
-library(qwraps2)
-
-df_pd %>%
-  summary_table(.)
- 
