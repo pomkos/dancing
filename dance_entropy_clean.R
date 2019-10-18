@@ -6,10 +6,12 @@ library(lubridate)
 
 # 1. LOADING SECTION ####
 
+setwd("C:/Users/albei/Documents/github/dancing")
+
 df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_entropy.csv"
 df_analyze_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/analyze_entropy.csv"
 
-setwd("C:/Users/albei/Documents/github/dancing")
+
 df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/ApEn_joints.csv")
 
 # 2. VARIABLE CLEANING SECTION ####

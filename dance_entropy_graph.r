@@ -95,6 +95,7 @@ ggsave(filename = "apen_lt_knee.pdf",
        device = "pdf")
 
 # ...... custom legend ####
+# PD hip and knee ####
 df_pd <- df_clean %>%
   filter(Group == "PD") %>%
   select(1:3, 5, 8, 10:12, -Date, -Participant, -Group) %>%
@@ -111,7 +112,7 @@ pd_knee_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
   geom_point(position = "jitter",
              aes(y = df_pd$`ApEn_Knee-LT-Flexion (deg)`, 
                  color = "5632")) + #labels data (largest number so second)
-  ggtitle("ApEn of Knee Flexion") +
+  ggtitle("ApEn of PD Knee Flexion") +
   labs(x = "Dance Types", y = "ApEn") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.55),
@@ -119,6 +120,7 @@ pd_knee_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
   geom_vline(xintercept = 1.5) +
   geom_vline(xintercept = 2.5) +
   geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
   scale_color_manual(name = "Location", # name of legend
                      labels = c("Right Knee Flexion", "Left Knee Flexion"), # labels the color = "number", in numerical order
                      values = c("red","black")) # colors the color = "number", in numerical order
@@ -140,7 +142,7 @@ pd_hip_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
              aes(y = df_pd$`ApEn_Hip-LT-Flexion (deg)`,
                  color = "8965"),
   ) +
-  ggtitle("ApEn of Hip Flexion") +
+  ggtitle("ApEn of PD Hip Flexion") +
   labs(x = "Dance Types", y = "ApEn") +
   theme_classic() +
   theme(plot.title = element_text(hjust = 0.55),
@@ -148,6 +150,7 @@ pd_hip_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
   geom_vline(xintercept = 1.5) +
   geom_vline(xintercept = 2.5) +
   geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
   scale_color_manual(name = "Location",
                      labels = c("Right Hip Flexion", "Left Hip Flexion"),
                      values = c("red","black"))
@@ -155,5 +158,66 @@ pd_hip_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
 pd_hip_plt
 ggsave(filename = "apen_pd_hip.pdf",
        plot = pd_hip_plt, 
+       path = graph_path,
+       device = "pdf")
+
+# OA hip and knee ####
+
+df_oa <- df_clean %>%
+  filter(Group == "OA") %>%
+  select(1:3, 5, 8, 10:12, -Date, -Participant, -Group) %>%
+  drop_na()
+
+oa_knee_plt <- ggplot(df_oa, aes(x = Dance_Type)) + 
+  geom_point(position = "jitter", # gives randomness in x direction so we can see points
+             aes(y = df_oa$`ApEn_Knee-RT-Flexion (deg)`, 
+                 color = "2356")) + # labels data (smallest number so first)
+  geom_point(position = "jitter",
+             aes(y = df_oa$`ApEn_Knee-LT-Flexion (deg)`, 
+                 color = "5632")) + #labels data (largest number so second)
+  ggtitle("ApEn of OA Knee Flexion") +
+  labs(x = "Dance Types", y = "ApEn") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location", # name of legend
+                     labels = c("Right Knee Flexion", "Left Knee Flexion"), # labels the color = "number", in numerical order
+                     values = c("red","black")) # colors the color = "number", in numerical order
+
+oa_knee_plt
+
+ggsave(filename = "apen_oa_knee.pdf", 
+       plot = oa_knee_plt, 
+       path = graph_path,
+       device = "pdf")
+
+oa_hip_plt <- ggplot(df_oa, aes(x = Dance_Type)) + 
+  geom_point(position = "jitter", # gives randomness in x direction so we can see points
+             aes(y = df_oa$`ApEn_Hip-RT-Flexion (deg)`, 
+                 color = "2356")) + # labels data (smallest number so first)
+  geom_point(position = "jitter",
+             aes(y = df_oa$`ApEn_Hip-LT-Flexion (deg)`, 
+                 color = "5632")) + #labels data (largest number so second)
+  ggtitle("ApEn of OA Hip Flexion") +
+  labs(x = "Dance Types", y = "ApEn") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location", # name of legend
+                     labels = c("Right Hip Flexion", "Left Hip Flexion"), # labels the color = "number", in numerical order
+                     values = c("red","black")) # colors the color = "number", in numerical order
+
+oa_hip_plt
+
+ggsave(filename = "apen_oa_hip.pdf", 
+       plot = oa_hip_plt, 
        path = graph_path,
        device = "pdf")
