@@ -30,12 +30,14 @@ Scripts to separate and clean Noraxon raw outputs, csv -> xlsx converter, and an
     * Cleaned dfs saved as csv files
 
 ## Dance Entropy Graph
+* Written in R
 * ksu_theme variable created for ggplot
 * Four graphs created with ksu_theme
 * Two scatter plots created, with two sources for each, and a custom legend for each
 * All graphs saved as pdf files
 
 ## Dance Entropy Stats
+* Written in R
 * Gets mean and standard deviation of entropies (manually put in desired variable)
 * Scripts for t-tests
 * Scripts for ANOVA 
