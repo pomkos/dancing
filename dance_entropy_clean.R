@@ -8,17 +8,17 @@ library(lubridate)
 
 setwd("C:/Users/albei/Documents/github/dancing")
 
-df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_entropy.csv"
-df_analyze_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/analyze_entropy.csv"
+df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv"
+df_analyze_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/analyze_samen.csv"
 
 
-df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/ApEn_joints.csv")
+df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
 
 # 2. VARIABLE CLEANING SECTION ####
 
 df_clean <- df %>%
   # Extract appropriate entropy
-  select(-useless_col, -`ApEn_Elbow-LT-Flexion (deg)`, -`ApEn_Elbow-RT-Flexion (deg)`) %>%
+  select(-useless_col, -`SamEn_Elbow-LT-Flexion (deg)`, -`SamEn_Elbow-RT-Flexion (deg)`) %>%
   # Create Date column
   mutate(Date = str_extract(string = file_name, pattern = "^20..............")) %>%
   mutate(Date = ymd_hm(Date)) %>%
@@ -66,3 +66,4 @@ df_analyze <- df_clean %>%
 
 write_csv(df_clean, path = df_clean_path)
 write_csv(df_analyze, path = df_analyze_path)
+
