@@ -11,6 +11,7 @@ df_clean <- df_clean %>%
 head(df_clean)
 
 df_pd_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/pd_samen.csv"
+df_oa_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/oa_samen.csv"
 graph_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Graphs"
 
 # 4. GRAPHING SECTION ####
@@ -99,6 +100,14 @@ ggsave(filename = "SamEn_lt_knee.pdf",
        device = "pdf")
 
 # ...... custom legend ####
+df_oa <- df_clean %>%
+  filter(Group == "OA") %>%
+  select(2,3,5,8,10,11,13) %>%
+  drop_na()
+
+str(df_oa)
+write_csv(df_oa, path = df_oa_path)
+
 # PD hip and knee ####
 df_pd <- df_clean %>%
   filter(Group == "PD") %>%
