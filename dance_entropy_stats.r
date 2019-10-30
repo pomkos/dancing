@@ -1,5 +1,6 @@
 library(tidyverse)
 
+setwd("C:/Users/albei/Documents/github/dancing")
 df_analyze <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/analyze_samen.csv")
 df_clean <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv")
 df_pd <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/pd_samen.csv")
@@ -211,3 +212,13 @@ leveneTest(df_pd$`SamEn_Hip-RT-Flexion (deg)` ~ df_pd$Dance_Type) # NS, checks o
 # Test of Normality
 plot(df_pd_lt_k.aov, 2) # Most points fall along straight reference line, checks out
 df_pd
+
+# 9. Both, long df ####
+
+# Make df long
+df_clean_long <- df_clean %>%
+  select(c(2,3,5,8,10,11,12,13)) %>%
+  pivot_longer(c(`SamEn_Hip-LT-Flexion (deg)`, `SamEn_Hip-RT-Flexion (deg)`), names_to = "Hip_Side", values_to = "SamEn_Hip_Flexion") %>%
+  mutate(ID = Participant + Group + Effected_Side)
+
+df_clean_long
