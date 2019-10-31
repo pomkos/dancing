@@ -2,7 +2,9 @@
 title: "Dance Entropy Analysis"
 author: "Peter Gates"
 date: "10/30/2019"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -15,7 +17,7 @@ df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/E
 
 ## Dance Study Entropy Analysis
 
-Entropy has been calculated using MatLab code for Left/Right Hip Flexion, Left/Right Knee Flexion. This document outlines the statistical results. 
+Entropy has been calculated using MatLab code for 176 biomechanical variables measured through the Noraxon system during dance sessions in participants with Parkinson's Disease (PD) and control older adults (OA). This document outlines the statistical results. 
 
 ### Data Cleaning
 
@@ -98,8 +100,6 @@ write_csv(df_oa, path = df_oa_path)
 ``` {r heads}
 df_pd
 df_oa
-
-glimpse(df_pd)
 ```
 
 ### Data Statistics
@@ -114,7 +114,7 @@ df_pd.man <- manova(dep_vars ~ df_pd$Dance_Type)
 summary(df_pd.man, test = "Pillai")
 ```
 
-The dependent variables that significantly different between dances include:
+The dependent variables significantly different between dances include:
 
 * SamEn_Elbow-LT-Flexion (p < 0.01)
 * SamEn_Hip-RT-Abduction (p < 0.01)
@@ -155,6 +155,11 @@ TukeyHSD(df_pd_LT_knee.aov)
 
 ### Data Graphs
 
+The bargraphs below demonstrate that for PD participants Foxtrot had the greatest mean SamEn of both left elbow flexion and left knee flexion, reenforcing our findings from the TukeyHSD run above.
+
+PD participants also tended to show greater mean right hip abduction SamEn when compared to OA participants.
+
+
 ```{r graphs_pd_bar, echo=FALSE}
 # KSU Theme: unify the design
 ksu_theme = list(
@@ -166,23 +171,23 @@ ksu_theme = list(
   ylim(0,0.15)
 )
 
-lt_elbow_plt <- ggplot(df_pd, aes(
+lt_elbow_plt <- ggplot(df_clean, aes(
   x = Dance_Type,
-  y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
+  y = df_clean$`SamEn_Elbow-LT-Flexion (deg)`,
   fill = Group )) + 
   ggtitle("Mean SamEn of LT Elbow Flexion") +
   ksu_theme
 
-rt_hip_plt <- ggplot(df_pd, aes(
+rt_hip_plt <- ggplot(df_clean, aes(
   x = Dance_Type,
-  y = df_pd$`SamEn_Hip-RT-Abduction (deg)`,
+  y = df_clean$`SamEn_Hip-RT-Abduction (deg)`,
   fill = Group )) + 
   ggtitle("Mean SamEn of RT Hip Abduction") +
   ksu_theme
 
-lt_knee_plt <- ggplot(df_pd, aes(
+lt_knee_plt <- ggplot(df_clean, aes(
   x = Dance_Type,
-  y = df_pd$`SamEn_Knee-LT-Flexion (deg)`,
+  y = df_clean$`SamEn_Knee-LT-Flexion (deg)`,
   fill = Group )) + 
   ggtitle("Mean SamEn of LT Knee Flexion") +
   ksu_theme
@@ -192,48 +197,28 @@ rt_hip_plt
 lt_knee_plt
 ```
 
+Plotted below are the SamEn of those variables that proved to be significantly different between dances in PD participants. Next to each plot is the OA equivalent. From here we can see that:
+
+* PD participants had a much wider range in SamEn of left hip abduction than OA participants during Tango
+* Both PD and OA participants had lower SamEn of left elbow flexion than right elbow flexion
+* PD participants had a wider range in SamEn of left knee flexion than OA participants during Tango
+
 ```{r graphs_dot, echo=FALSE}
 library(ggrepel)
 pos <- position_jitter(width = 0.5, seed = 2) # standardizes randomness
 
-pd_hip_plt <- ggplot(df_pd, aes(x = Dance_Type)) + 
+elbow_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
   geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Hip-RT-Flexion (deg)`,
+             aes(y = df_clean$`SamEn_Elbow-RT-Flexion (deg)`,
                  color = "6532")
   ) +
   geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Hip-LT-Flexion (deg)`,
+             aes(y = df_clean$`SamEn_Elbow-LT-Flexion (deg)`,
                  color = "8965"),
   ) +
-  labs(title = "SamEn of PD Hip Flexion",
-       subtitle = "Left side most effected unless otherwise indicated",
+  labs(title = "SamEn of Elbow Flexion",
        x = "Dance Types", 
        y = "SamEn") +
-  theme_classic() +
-  theme(plot.title = element_text(hjust = 0.55),
-        legend.position = "right") +
-  geom_vline(xintercept = 1.5) +
-  geom_vline(xintercept = 2.5) +
-  geom_vline(xintercept = 3.5) +
-  ylim(0,0.2) +
-  scale_color_manual(name = "Location",
-                     labels = c("Right Hip Flexion", "Left Hip Flexion"),
-                     values = c("red","black"))
-
-pd_elbow_plt <- ggplot(df_pd, aes(x = Dance_Type)) + 
-  geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Elbow-RT-Flexion (deg)`,
-                 color = "6532")
-  ) +
-  geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
-                 color = "8965"),
-  ) +
-  labs(title = "SamEn of PD Elbow Flexion",
-       subtitle = "Left side most effected unless otherwise indicated",
-       x = "Dance Types", 
-       y = "SamEn") +
-  theme_classic() +
   theme(plot.title = element_text(hjust = 0.55),
         legend.position = "right") +
   geom_vline(xintercept = 1.5) +
@@ -242,22 +227,44 @@ pd_elbow_plt <- ggplot(df_pd, aes(x = Dance_Type)) +
   ylim(0,0.2) +
   scale_color_manual(name = "Location",
                      labels = c("Right Elbow Flexion", "Left Elbow Flexion"),
-                     values = c("red","black"))
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
 
-knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+hip_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
   geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Knee-RT-Flexion (deg)`,
+             aes(y = df_clean$`SamEn_Hip-RT-Abduction (deg)`,
                  color = "6532")
   ) +
   geom_point(position = pos,
-             aes(y = df_pd$`SamEn_Knee-LT-Flexion (deg)`,
+             aes(y = df_clean$`SamEn_Hip-LT-Abduction (deg)`,
                  color = "8965"),
   ) +
-  labs(title = "SamEn of PD Knee Flexion",
-       subtitle = "Left side most effected unless otherwise indicated",
+  labs(title = "SamEn of Abduction",
        x = "Dance Types", 
        y = "SamEn") +
-  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Hip Abduction", "Left Hip Abduction"),
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
+
+knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Knee-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Knee-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of Knee Flexion",
+       x = "Dance Types", 
+       y = "SamEn") +
   theme(plot.title = element_text(hjust = 0.55),
         legend.position = "right") +
   geom_vline(xintercept = 1.5) +
@@ -268,10 +275,8 @@ knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) +
                      labels = c("Right Knee Flexion", "Left Knee Flexion"),
                      values = c("red","black")) +
   facet_wrap(~ Group)
-glimpse(df_clean)
-glimpse(df_pd)
-pd_hip_plt
-pd_elbow_plt
 
+hip_plt
+elbow_plt
 knee_plt
 ```
