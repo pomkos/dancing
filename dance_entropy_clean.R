@@ -15,10 +15,10 @@ df_analyze_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poste
 df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
 
 # 2. VARIABLE CLEANING SECTION ####
-
+glimpse(df)
 df_clean <- df %>%
   # Extract appropriate entropy
-  select(-useless_col, -`SamEn_Elbow-LT-Flexion (deg)`, -`SamEn_Elbow-RT-Flexion (deg)`) %>%
+  select(-useless_col) %>%
   # Create Date column
   mutate(Date = str_extract(string = file_name, pattern = "^20..............")) %>%
   mutate(Date = ymd_hm(Date)) %>%

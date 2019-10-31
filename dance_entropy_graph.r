@@ -102,7 +102,6 @@ ggsave(filename = "SamEn_lt_knee.pdf",
 # ...... custom legend ####
 df_oa <- df_clean %>%
   filter(Group == "OA") %>%
-  select(2,3,5,8,10,11,13) %>%
   drop_na()
 
 str(df_oa)
@@ -111,7 +110,6 @@ write_csv(df_oa, path = df_oa_path)
 # PD hip and knee ####
 df_pd <- df_clean %>%
   filter(Group == "PD") %>%
-  select(2,3,5,8,10,11,13) %>%
   drop_na()
 
 str(df_pd)
@@ -202,8 +200,9 @@ ggsave(filename = "SamEn_pd_hip.pdf",
 
 df_oa <- df_clean %>%
   filter(Group == "OA") %>%
-  select(1:3, 5, 8, 10:12, -Date, -Participant, -Group) %>%
   drop_na()
+
+glimpse(df_clean)
 
 oa_knee_plt <- ggplot(df_oa, aes(x = Dance_Type)) + 
   geom_point(position = "jitter", # gives randomness in x direction so we can see points

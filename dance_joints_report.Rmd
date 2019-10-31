@@ -1,0 +1,185 @@
+---
+title: "Dance Entropy Analysis"
+author: "Peter Gates"
+date: "10/30/2019"
+output: html_document
+---
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(ggthemes)
+df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
+```
+
+## Dance Study Entropy Analysis
+
+Entropy has been calculated using MatLab code for Left/Right Hip Flexion, Left/Right Knee Flexion. This document outlines the statistical results. 
+
+### Data Cleaning
+
+Data was cleaned using the following criteria:
+
+* Date was extracted from filename and added to new Date column
+* Participant ID extracted from filename and added to new Participant column
+* Dance Type was extracted from filename and added to new Dance Type column
+* Rumba, Swing, Electric Slide data were removed
+* New Group column was created where data was organized into "OA" or "PD"
+* All values equal to "0" were replaced with "NA". 0 indicates a failure of the biomechanical sensors and thus are excluded from analysis
+* One observation of Tango was removed as there were NA data for any of the variables.
+
+The cleaned data were saved as df_clean.
+
+df_clean was further separated into PD or OA data, for ease of analysis. These are shown below.
+
+
+```{r clean, include=FALSE, echo=TRUE}
+df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv"
+
+df_clean <- df %>%
+  # Extract appropriate entropy
+  select(-useless_col) %>%
+  # Create Date column
+  mutate(Date = str_extract(string = file_name, pattern = "^20..............")) %>%
+  mutate(Date = ymd_hm(Date)) %>%
+  # Create Participant column
+  mutate(Participant = str_extract(file_name, "pddance[0-9][0-9][0-9]|pddancecon[0-9][0-9][0-9]")) %>%
+  mutate(Participant = factor(Participant)) %>%
+  # Create Dance_Type column
+  mutate(file_name = str_remove(file_name,".*pddance[0-9][0-9][0-9]_")) %>%
+  mutate(file_name = str_remove(file_name,".*pddancecon[0-9][0-9][0-9]_")) %>%
+  mutate(Dance_Type = str_remove(file_name,".xlsx")) %>%  
+  # Reorder, remove duplicates
+  select(Date, Participant, Dance_Type, ends_with("(deg)")) %>% # EDIT ME
+  # Clean Dance column
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*Tango.*|.*tango.*", replacement = "Tango")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*Waltz.*|.*waltz.*", replacement = "Waltz")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*Waltz.*|.*waltz.*", replacement = "Waltz")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*line.*|.*Line.*", replacement = "Line Dance")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*foxtrot.*|.*Foxtrot.*", replacement = "Foxtrot")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*Prominent.*", replacement = "Tango")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*BoxStep.*", replacement = "Foxtrot")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*Electric slide.*|.*Electric Slide.*", replacement = "Electric_Slide")) %>%
+  mutate(Dance_Type = str_replace(Dance_Type, pattern = ".*rumba.*|.*Rumba.*", replacement = "Rumba")) %>%
+  mutate(Dance_Type = factor(Dance_Type)) %>%
+  # Remove Rumba, Swing, Electric Slide
+  filter(Dance_Type != "Rumba") %>%
+  filter(Dance_Type != "Swing") %>%
+  filter(Dance_Type != "Electric_Slide") %>%
+  # Control v PD column
+  mutate(Group = Participant) %>%
+  mutate(Group = str_replace(Group, pattern = ".*pddancecon.*", replacement = "OA")) %>%
+  mutate(Group = str_replace(Group, pattern = ".*pddance.*", replacement = "PD")) %>%
+  mutate(Group = factor(Group))
+
+df_clean[df_clean == 0] <- NA
+
+write_csv(df_clean, path = df_clean_path)
+```
+
+```{r separate, include=FALSE, echo=TRUE}
+df_pd_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/pd_samen.csv"
+df_oa_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/oa_samen.csv"
+
+df_pd <- df_clean %>%
+  filter(Group == "PD") %>%
+  drop_na()
+
+write_csv(df_pd, path = df_pd_path)
+
+df_oa <- df_clean %>%
+  filter(Group == "OA") %>%
+  drop_na()
+
+write_csv(df_oa, path = df_oa_path)
+```
+
+``` {r heads}
+df_pd
+df_oa
+
+glimpse(df_pd)
+```
+
+### Data Statistics
+
+A MANOVA was run to determine whether any significant differences exist between dance types in terms of the 10 variables. This turned out to be significant (p < 0.001).
+
+```{r manova_dance, echo=FALSE}
+
+dep_vars <- as.matrix(select(df_pd, ends_with("(deg)")))
+df_pd.man <- manova(dep_vars ~ df_pd$Dance_Type)
+
+summary(df_pd.man, test = "Pillai")
+```
+
+The dependent variables that significantly different between dances include:
+
+* SamEn_Elbow-LT-Flexion (p < 0.01)
+* SamEn_Hip-RT-Abduction (p < 0.01)
+* SamEn_Knee-LT-Flexion was slightly significant (p < 0.1)
+
+The following only shows the significant results:
+
+``` {r manova_summary, echo=FALSE}
+# summary.aov(df_pd.man)
+
+print("SamEn_Elbow-LT-Flexion")
+df_pd_LT_elbow.aov <- aov(df_pd$`SamEn_Elbow-LT-Flexion (deg)` ~ df_pd$Dance_Type)
+summary.aov(df_pd_LT_elbow.aov)
+print("SamEn_Hip-RT-Abduction")
+df_pd_RT_hip.aov <- aov(df_pd$`SamEn_Hip-RT-Abduction (deg)`~ df_pd$Dance_Type)
+summary.aov(df_pd_RT_hip.aov)
+print("SamEn_Knee-LT-Flexion")
+df_pd_LT_knee.aov <- aov(df_pd$`SamEn_Knee-LT-Flexion (deg)` ~ df_pd$Dance_Type)
+summary.aov(df_pd_LT_knee.aov)
+```
+
+TukeyHSD was run to determine which dances saw the significant difference in the appropriate SamEn. 
+
+* SamEn in LT elbow flexion was significantly different between TANGO and FOXTROT (p = 0.001)
+* SamEn in RT hip abduction was significantly different between TANGO and LINE DANCE (p = 0.005), LINE DANCE and FOXTROT (p = 0.046)
+* SamEn in LT knee flexion was NOT significantly different between any dances (p > 0.1 for all comparisons)
+
+```{r tukey, echo=FALSE}
+print("SamEn_Elbow-LT-Flexion")
+TukeyHSD(df_pd_LT_elbow.aov)
+
+print("SamEn_Hip-RT-Abduction")
+TukeyHSD(df_pd_RT_hip.aov)
+
+print("SamEn_Knee-LT-Flexion")
+TukeyHSD(df_pd_LT_knee.aov)
+```
+
+### Data Graphs
+
+```{r, graphs1, echo=FALSE}
+# KSU Theme: unify the design
+ksu_theme = list(
+  geom_col(position = position_dodge(0.9), color = "black"), # black gives the bars an outline. Dodge separates instead of default stack
+  labs(x = "Dance Types", y = "Mean SamEn"),
+  theme_classic(),  # gets rid of background lines
+  theme(plot.title = element_text(hjust = 0.55)),
+  scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")), # default colors at KSU
+  ylim(0,0.15)
+)
+
+lt_elbow_plt <- ggplot(df_pd, aes(
+  x = Dance_Type,
+  y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
+  fill = Group )) + 
+  ggtitle("Mean SamEn of LT Knee Flexion") +
+  ksu_theme
+
+rt_hip_plt <- ggplot(df_pd, aes(
+  x = Dance_Type,
+  y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
+  fill = Group )) + 
+  ggtitle("Mean SamEn of LT Knee Flexion") +
+  ksu_theme
+
+lt_elbow_plt
+```
+

@@ -1,41 +1,18 @@
 library(tidyverse)
 
-setwd("C:/Users/albei/Documents/github/dancing")
-df_analyze <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/analyze_samen.csv")
+# setwd("C:/Users/albei/Documents/github/dancing")
 df_clean <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv")
 df_pd <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/pd_samen.csv")
 df_oa <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/oa_samen.csv")
 
 # 5. STATS SECTION ####
 
-# Comparison "KNEE" in PD v OA (t test)
-# Comparison "KNEE" in PD across dances (ANOVA)
-
-# Overall comparison of PD v OA in the ...
-# ... LT Knee Flexion
-spread_lt_knee <- spread(df_analyze, key = Group, value = `SamEn_Knee-LT-Flexion (deg)_mean`)
-t.test(spread_lt_knee$PD,spread_lt_knee$OA, alternative = "two.sided", var.equal = FALSE) # p = 0.054
-
-# ... RT Knee Flexion
-spread_rt_knee <- spread(df_analyze, key = Group, value = `SamEn_Knee-RT-Flexion (deg)_mean`)
-t.test(spread_rt_knee$PD,spread_rt_knee$OA, alternative = "two.sided", var.equal = FALSE)  # p = 0.74
-
-# ... LT Hip Flexion
-spread_lt_hip <- spread(df_analyze, key = Group, value = `SamEn_Hip-LT-Flexion (deg)_mean`)
-t.test(spread_lt_hip$PD,spread_lt_hip$OA, alternative = "two.sided", var.equal = FALSE) # p = 0.08
-
-# ... RT Hip Flexion
-spread_rt_hip <- spread(df_analyze, key = Group, value = `SamEn_Hip-RT-Flexion (deg)_mean`)
-t.test(spread_rt_hip$PD,spread_rt_hip$OA, alternative = "two.sided", var.equal = FALSE) # p = 0.0583
-
-# OA v PD in RT Hip Flexion for the ...
+# OA v PD in RT Hip Flexion for ...
 df_t <- df_clean %>%
   select(1:3, 5, 8, 10:12) %>%
   drop_na() %>%
   unite(temp, Group, Dance_Type, sep = "_") %>%
   spread(temp, `SamEn_Hip-RT-Flexion (deg)`)
-
-df_t
 
 # ... Tango
 t.test(df_t$OA_Tango, df_t$PD_Tango, alternative = "two.sided", var.equal = FALSE) # p = 0.003227
@@ -218,7 +195,21 @@ df_pd
 # Make df long
 df_clean_long <- df_clean %>%
   select(c(2,3,5,8,10,11,12,13)) %>%
-  pivot_longer(c(`SamEn_Hip-LT-Flexion (deg)`, `SamEn_Hip-RT-Flexion (deg)`), names_to = "Hip_Side", values_to = "SamEn_Hip_Flexion") %>%
-  mutate(ID = Participant + Group + Effected_Side)
+  # unite(ID, c(Participant,Group, Effected_Side),sep="_") %>%
+  pivot_longer(cols = c(`SamEn_Hip-LT-Flexion (deg)`,`SamEn_Hip-RT-Flexion (deg)`),
+               names_to = "Side_Hip", values_to = "SamEn_Hip_Flexion") %>%
+  pivot_longer(cols = c(`SamEn_Knee-LT-Flexion (deg)`, `SamEn_Knee-RT-Flexion (deg)`), 
+               names_to = "Side_Knee", values_to = "SamEn_Knee_Flexion")
 
-df_clean_long
+glimpse(df_clean_long)
+
+longHip.aov <- aov(df_clean_long$SamEn_Hip_Flexion ~ df_clean_long$Dance_Type)
+summary.aov(longHip.aov)
+tukey.test <- TukeyHSD(longHip.aov)
+
+longKnee.aov <- aov(df_clean_long$SamEn_Knee_Flexion ~ df_clean_long$Dance_Type)
+summary.aov(longKnee.aov)
+tukey.test <- TukeyHSD(longKnee.aov)
+
+tukey.test
+plot(tukey.test)
