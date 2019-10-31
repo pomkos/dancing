@@ -7,7 +7,7 @@ output: html_document
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(lubridate)
+library(lubridate) # date time formatting
 library(ggplot2)
 library(ggthemes)
 df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
@@ -155,7 +155,7 @@ TukeyHSD(df_pd_LT_knee.aov)
 
 ### Data Graphs
 
-```{r, graphs1, echo=FALSE}
+```{r graphs_pd_bar, echo=FALSE}
 # KSU Theme: unify the design
 ksu_theme = list(
   geom_col(position = position_dodge(0.9), color = "black"), # black gives the bars an outline. Dodge separates instead of default stack
@@ -170,16 +170,108 @@ lt_elbow_plt <- ggplot(df_pd, aes(
   x = Dance_Type,
   y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
   fill = Group )) + 
-  ggtitle("Mean SamEn of LT Knee Flexion") +
+  ggtitle("Mean SamEn of LT Elbow Flexion") +
   ksu_theme
 
 rt_hip_plt <- ggplot(df_pd, aes(
   x = Dance_Type,
-  y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
+  y = df_pd$`SamEn_Hip-RT-Abduction (deg)`,
+  fill = Group )) + 
+  ggtitle("Mean SamEn of RT Hip Abduction") +
+  ksu_theme
+
+lt_knee_plt <- ggplot(df_pd, aes(
+  x = Dance_Type,
+  y = df_pd$`SamEn_Knee-LT-Flexion (deg)`,
   fill = Group )) + 
   ggtitle("Mean SamEn of LT Knee Flexion") +
   ksu_theme
 
 lt_elbow_plt
+rt_hip_plt
+lt_knee_plt
 ```
 
+```{r graphs_dot, echo=FALSE}
+library(ggrepel)
+pos <- position_jitter(width = 0.5, seed = 2) # standardizes randomness
+
+pd_hip_plt <- ggplot(df_pd, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Hip-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Hip-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of PD Hip Flexion",
+       subtitle = "Left side most effected unless otherwise indicated",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Hip Flexion", "Left Hip Flexion"),
+                     values = c("red","black"))
+
+pd_elbow_plt <- ggplot(df_pd, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Elbow-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Elbow-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of PD Elbow Flexion",
+       subtitle = "Left side most effected unless otherwise indicated",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Elbow Flexion", "Left Elbow Flexion"),
+                     values = c("red","black"))
+
+knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Knee-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_pd$`SamEn_Knee-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of PD Knee Flexion",
+       subtitle = "Left side most effected unless otherwise indicated",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Knee Flexion", "Left Knee Flexion"),
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
+glimpse(df_clean)
+glimpse(df_pd)
+pd_hip_plt
+pd_elbow_plt
+
+knee_plt
+```
