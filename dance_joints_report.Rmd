@@ -3,8 +3,9 @@ title: "Dance Entropy Analysis"
 author: "Peter Gates"
 date: "10/30/2019"
 output:
-  html_document: default
   pdf_document: default
+  word_document: default
+  html_document: default
 ---
 ```{r setup, include=FALSE, echo=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -85,16 +86,11 @@ df_pd_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Ent
 df_oa_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/oa_samen.csv"
 
 df_pd <- df_clean %>%
-  filter(Group == "PD") %>%
-  drop_na()
-
-write_csv(df_pd, path = df_pd_path)
+  filter(Group == "PD")
 
 df_oa <- df_clean %>%
-  filter(Group == "OA") %>%
-  drop_na()
+  filter(Group == "OA")
 
-write_csv(df_oa, path = df_oa_path)
 ```
 
 ``` {r heads}
@@ -104,106 +100,231 @@ df_oa
 
 ### Data Statistics
 
-A MANOVA was run to determine whether any significant differences exist between dance types in terms of the 10 variables. This turned out to be significant (p < 0.001).
-
-```{r manova_dance, echo=FALSE}
-
-dep_vars <- as.matrix(select(df_pd, ends_with("(deg)")))
-df_pd.man <- manova(dep_vars ~ df_pd$Dance_Type)
-
-summary(df_pd.man, test = "Pillai")
-```
-
-The dependent variables significantly different between dances include:
-
-* SamEn_Elbow-LT-Flexion (p < 0.01)
-* SamEn_Hip-RT-Abduction (p < 0.01)
-* SamEn_Knee-LT-Flexion was slightly significant (p < 0.1)
-
-The following only shows the significant results:
-
-``` {r manova_summary, echo=FALSE}
-# summary.aov(df_pd.man)
-
-print("SamEn_Elbow-LT-Flexion")
-df_pd_LT_elbow.aov <- aov(df_pd$`SamEn_Elbow-LT-Flexion (deg)` ~ df_pd$Dance_Type)
-summary.aov(df_pd_LT_elbow.aov)
-print("SamEn_Hip-RT-Abduction")
-df_pd_RT_hip.aov <- aov(df_pd$`SamEn_Hip-RT-Abduction (deg)`~ df_pd$Dance_Type)
-summary.aov(df_pd_RT_hip.aov)
-print("SamEn_Knee-LT-Flexion")
-df_pd_LT_knee.aov <- aov(df_pd$`SamEn_Knee-LT-Flexion (deg)` ~ df_pd$Dance_Type)
-summary.aov(df_pd_LT_knee.aov)
-```
-
-TukeyHSD was run to determine which dances saw the significant difference in the appropriate SamEn. 
-
-* SamEn in LT elbow flexion was significantly different between TANGO and FOXTROT (p = 0.001)
-* SamEn in RT hip abduction was significantly different between TANGO and LINE DANCE (p = 0.005), LINE DANCE and FOXTROT (p = 0.046)
-* SamEn in LT knee flexion was NOT significantly different between any dances (p > 0.1 for all comparisons)
-
-```{r tukey, echo=FALSE}
-print("SamEn_Elbow-LT-Flexion")
-TukeyHSD(df_pd_LT_elbow.aov)
-
-print("SamEn_Hip-RT-Abduction")
-TukeyHSD(df_pd_RT_hip.aov)
-
-print("SamEn_Knee-LT-Flexion")
-TukeyHSD(df_pd_LT_knee.aov)
-```
-
-### Data Graphs
+#### Difference between sides, within dances
 
 The bargraphs below demonstrate that for PD participants Foxtrot had the greatest mean SamEn of both left elbow flexion and left knee flexion, reenforcing our findings from the TukeyHSD run above.
 
 PD participants also tended to show greater mean right hip abduction SamEn when compared to OA participants.
 
+##### PD left v right side
 
-```{r graphs_pd_bar, echo=FALSE}
-# KSU Theme: unify the design
-ksu_theme = list(
-  geom_col(position = position_dodge(0.9), color = "black"), # black gives the bars an outline. Dodge separates instead of default stack
-  labs(x = "Dance Types", y = "Mean SamEn"),
-  theme_classic(),  # gets rid of background lines
-  theme(plot.title = element_text(hjust = 0.55)),
-  scale_fill_manual(" ", values = c("OA" = "yellow", "PD" = "Blue")), # default colors at KSU
-  ylim(0,0.15)
-)
+Is there a significant difference in left vs right SamEn, per Dance_Type?
 
-lt_elbow_plt <- ggplot(df_clean, aes(
-  x = Dance_Type,
-  y = df_clean$`SamEn_Elbow-LT-Flexion (deg)`,
-  fill = Group )) + 
-  ggtitle("Mean SamEn of LT Elbow Flexion") +
-  ksu_theme
+H0: left_variable = right_variable
 
-rt_hip_plt <- ggplot(df_clean, aes(
-  x = Dance_Type,
-  y = df_clean$`SamEn_Hip-RT-Abduction (deg)`,
-  fill = Group )) + 
-  ggtitle("Mean SamEn of RT Hip Abduction") +
-  ksu_theme
+HA: left_variable > right_variable
 
-lt_knee_plt <- ggplot(df_clean, aes(
-  x = Dance_Type,
-  y = df_clean$`SamEn_Knee-LT-Flexion (deg)`,
-  fill = Group )) + 
-  ggtitle("Mean SamEn of LT Knee Flexion") +
-  ksu_theme
+| p values| Elbow Flexion| Hip Abduction| Hip Rotation| Hip Flexion| Elbow Flexion|
+| --------| ------------ | ------------ | ----------- | ---------- | ------------ |
+| Tango   | 0.02333 | 0.00000046 | 0.000096 | 0.71698 | 0.47055 |
+| Foxtrot | 0.52267 | 0.02530 | 0.08354 | 0.56562 | 0.00612 |
 
-lt_elbow_plt
-rt_hip_plt
-lt_knee_plt
+PD Line and Waltz did not have enough data for a t test.
+
+```{r pd_left_v_right, echo=FALSE, include=FALSE}
+library(reshape2) # for melt function
+
+df_clean2 <- df_clean[-1:-2]
+
+df_clean2_pd <- df_clean2 %>%
+  filter(Group == "PD")
+
+## Tango
+df_clean2_pd_tango <- df_clean2_pd %>%
+  filter(Dance_Type == "Tango")
+
+meltdf_pd_tango <- melt(df_clean2_pd_tango)
+pairwise.t.test(meltdf_pd_tango$value, meltdf_pd_tango$variable, p.adjust = "none")
+                  # p_value
+  # Elbow_Flexion: 0.02333
+  # Hip_Abduction: 4.6e-07
+  # Hip_Rotation:  9.6e-05
+  # Hip_Flexion:   0.71698
+  # Knee_Flexion:  0.47055
+
+## Foxtrot
+df_clean2_pd_foxtrot <- df_clean2_pd %>%
+  filter(Dance_Type == "Foxtrot")
+
+meltdf_pd_foxtrot <- melt(df_clean2_pd_foxtrot)
+pairwise.t.test(meltdf_pd_foxtrot$value, meltdf_pd_foxtrot$variable, p.adjust = "none")
+                  # p_value
+  # Elbow_Flexion: 0.52267
+  # Hip_Abduction: 0.02530
+  # Hip_Rotation:  0.08354
+  # Hip_Flexion:   0.56562
+  # Knee_Flexion:  0.00612
+
+## Line Dance
+df_clean2_pd_line <- df_clean2_pd %>%
+  filter(Dance_Type == "Line Dance")
+
+meltdf_pd_line <- melt(df_clean2_pd_line)
+pairwise.t.test(meltdf_pd_line$value, meltdf_pd_line$variable, p.adjust = "none")
+                  # p_value
+  # Elbow_Flexion: 
+  # Hip_Abduction: 
+  # Hip_Rotation:  
+  # Hip_Flexion:   
+  # Knee_Flexion:  
+
+## Waltz
+df_clean2_pd_waltz <- df_clean2_pd %>%
+  filter(Dance_Type == "Waltz")
+
+meltdf_pd_waltz <- melt(df_clean2_pd_waltz)
+pairwise.t.test(meltdf_pd_waltz$value, meltdf_pd_waltz$variable, p.adjust = "none")
+                  # p_value
+  # Elbow_Flexion: 
+  # Hip_Abduction: 
+  # Hip_Rotation:  
+  # Hip_Flexion:   
+  # Knee_Flexion:  
+
 ```
 
-Plotted below are the SamEn of those variables that proved to be significantly different between dances in PD participants. Next to each plot is the OA equivalent. From here we can see that:
 
-* PD participants had a much wider range in SamEn of left hip abduction than OA participants during Tango
-* Both PD and OA participants had lower SamEn of left elbow flexion than right elbow flexion
-* PD participants had a wider range in SamEn of left knee flexion than OA participants during Tango
+```{r pd_face_bars, echo=FALSE}
+library(reshape2) # for melt(...) function
+library(ggsignif) # for adding sig label to ggplot2
 
-```{r graphs_dot, echo=FALSE}
+
+df_clean2 <- df_clean[-1:-2]
+gg <- melt(df_clean2,id=c("Group","Dance_Type"))   #turns all variables into observations
+pos <- position_jitter(width = 0.25, seed = 21) # standardizes jitter
+## PD
+gg2_PD <- gg %>%
+  # Create Left/Side column
+  mutate(Side = str_extract(string = variable, pattern = "-..-")) %>%
+  mutate(variable = str_replace(variable, pattern = "-LT-", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "-RT-", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "\\(deg\\)", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "SamEn_", replacement = "")) %>%
+  mutate(Side = str_replace(Side, pattern = "-LT-", replacement = "Left")) %>%
+  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right")) %>%
+  filter(Group == "PD")
+
+pd_signif_annotate <- data.frame(Dance_Type = c("Tango", 
+                                                "Foxtrot"),
+                                 start = c(0.7, 1.7, 2.7, 3.7, 4.7,
+                                           0.7, 1.7, 2.7, 3.7, 4.7),
+                                 end = c(1.25, 2.25, 3.25, 4.25, 5.25,
+                                         1.25, 2.25, 3.25, 4.25, 5.25),
+                                 y = c(0.15, 0.175, 0.15, 0.175, 0.15,
+                                       0.15, 0.175, 0.15, 0.175, 0.15),
+                                 label = c("0.023", "0.025", "  NS ", "0.084",  " NS  ", 
+                                            "0.006",  "<0.0001", " NS  ", "< 0.0001", "0.006 ")
+                                 )
+ggplot(gg2_PD, aes(x=variable, y=value)) + 
+  geom_point(position=pos, aes(color = Side)) + 
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  geom_vline(xintercept = 4.5) +
+  facet_wrap(~Dance_Type)+
+  ggtitle("PD SamEn in Left and Right Sides") + 
+  xlab("Noraxon Measurements") +
+  ylab("Sample Entropy") +
+  scale_fill_discrete(name = "") +
+  ylim(0,0.2) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_signif(data = pd_signif_annotate,
+              aes(xmin = start,
+                  xmax = end,
+                  annotations = label,
+                  y_position = y),
+              textsize = 2.5,
+              vjust = -0.04,
+              manual = TRUE)
+```
+
+##### OA left v right side
+
+Is there a significant difference in left vs right SamEn, per Dance_Type?
+
+H0: left_variable = right_variable
+
+HA: left_variable > right_variable
+
+| p values| Elbow Flexion| Hip Abduction| Hip Rotation| Hip Flexion| Elbow Flexion|
+| --------| ------------ | ------------ | ----------- | ---------- | ------------ |
+| Tango   | 0.29891 | 0.00207 | 0.20024 | 0.01039 | 0.89776 |
+
+OA Foxtrot, Line and Waltz did not have enough data for a t test.
+
+```{r oa_left_v_right, echo=FALSE, include=FALSE}
+library(reshape2) # for melt function
+df_clean2 <- df_clean[-1:-2]
+
+df_clean2_oa <- df_clean2 %>%
+  filter(Group == "OA")
+df_clean2_oa
+## Tango
+df_clean2_oa_tango <- df_clean2_oa %>%
+  filter(Dance_Type == "Tango")
+
+meltdf_oa_tango <- melt(df_clean2_oa_tango)
+pairwise.t.test(meltdf_oa_tango$value, meltdf_oa_tango$variable, p.adjust = "none")
+                  # p_value
+  # Elbow_Flexion: 0.29891
+  # Hip_Abduction: 0.00207
+  # Hip_Rotation:  0.01039
+  # Hip_Flexion:   0.20024
+  # Knee_Flexion:  0.89776
+
+```
+
+```{r oa_face_bars, echo=FALSE}
+## OA
+gg2_OA <- gg %>%
+  # Create Left/Side column
+  mutate(Side = str_extract(string = variable, pattern = "-..-")) %>%
+  mutate(variable = str_replace(variable, pattern = "-LT-", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "-RT-", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "\\(deg\\)", replacement = "")) %>%
+  mutate(variable = str_replace(variable, pattern = "SamEn_", replacement = "")) %>%
+  mutate(Side = str_replace(Side, pattern = "-LT-", replacement = "Left")) %>%
+  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right")) %>%
+  filter(Group == "OA")
+
+oa_signif_annotate <- data.frame(Dance_Type = "Tango",
+                                 start = c(0.7, 1.7, 2.7, 3.7, 4.7),
+                                 end = c(1.25, 2.25, 3.25, 4.25, 5.25),
+                                 y = c(0.075, 0.11, 0.11, 0.15, 0.11),
+                                 label = c(" NS", "0.00207", " NS ", "0.01039", "  NS  ")
+                                 )
+ggplot(gg2_OA, aes(x=variable, y=value)) + 
+  geom_point(position=pos, aes(color = Side)) + 
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  geom_vline(xintercept = 4.5) +
+  facet_wrap(~Dance_Type)+
+  ggtitle("OA SamEn in Left and Right Sides") + 
+  xlab("Noraxon Measurements") +
+  ylab("Sample Entropy") +
+  scale_fill_discrete(name = "") +
+  ylim(0,0.2) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  geom_signif(data = oa_signif_annotate,
+              aes(xmin = start,
+                  xmax = end,
+                  annotations = label,
+                  y_position = y),
+              textsize = 2.5,
+              vjust = -0.04,
+              manual = TRUE)
+
+```
+
+
+<!-- Plotted below are the SamEn of those variables that proved to be significantly different between dances in PD participants. Next to each plot is the OA equivalent. From here we can see that: -->
+
+<!-- * PD participants had a much wider range in SamEn of left hip abduction than OA participants during Tango -->
+<!-- * Both PD and OA participants had lower SamEn of left elbow flexion than right elbow flexion -->
+<!-- * PD participants had a wider range in SamEn of left knee flexion than OA participants during Tango -->
+
+```{r graphs_dot, echo=FALSE, include=FALSE}
 library(ggrepel)
 pos <- position_jitter(width = 0.5, seed = 2) # standardizes randomness
 
@@ -239,7 +360,7 @@ hip_plt <- ggplot(df_clean, aes(x = Dance_Type)) +
              aes(y = df_clean$`SamEn_Hip-LT-Abduction (deg)`,
                  color = "8965"),
   ) +
-  labs(title = "SamEn of Abduction",
+  labs(title = "SamEn of Hip Abduction",
        x = "Dance Types", 
        y = "SamEn") +
   theme(plot.title = element_text(hjust = 0.55),
@@ -276,7 +397,54 @@ knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) +
                      values = c("red","black")) +
   facet_wrap(~ Group)
 
-hip_plt
-elbow_plt
-knee_plt
+```
+#### Difference amongst dances
+
+A MANOVA was run to determine whether any significant differences exist between dance types in terms of the 10 variables. This turned out to be significant (p < 0.001).
+
+```{r pd_manova_dance, echo=FALSE}
+
+dep_vars <- as.matrix(select(df_pd, ends_with("(deg)")))
+df_pd.man <- manova(dep_vars ~ df_pd$Dance_Type)
+
+summary(df_pd.man, test = "Pillai")
+```
+
+The dependent variables significantly different between dances include:
+
+* SamEn_Elbow-LT-Flexion (p < 0.01)
+* SamEn_Hip-RT-Abduction (p < 0.01)
+* SamEn_Knee-LT-Flexion was slightly significant (p < 0.1)
+
+The following only shows the significant results:
+
+``` {r pd_manova_summary, echo=FALSE}
+# summary.aov(df_pd.man)
+
+print("SamEn_Elbow-LT-Flexion")
+df_pd_LT_elbow.aov <- aov(df_pd$`SamEn_Elbow-LT-Flexion (deg)` ~ df_pd$Dance_Type)
+summary.aov(df_pd_LT_elbow.aov)
+print("SamEn_Hip-RT-Abduction")
+df_pd_RT_hip.aov <- aov(df_pd$`SamEn_Hip-RT-Abduction (deg)`~ df_pd$Dance_Type)
+summary.aov(df_pd_RT_hip.aov)
+print("SamEn_Knee-LT-Flexion")
+df_pd_LT_knee.aov <- aov(df_pd$`SamEn_Knee-LT-Flexion (deg)` ~ df_pd$Dance_Type)
+summary.aov(df_pd_LT_knee.aov)
+```
+
+TukeyHSD was run to determine which dances saw the significant difference in the appropriate SamEn. 
+
+* SamEn in LT elbow flexion was significantly different between TANGO and FOXTROT (p = 0.001)
+* SamEn in RT hip abduction was significantly different between TANGO and LINE DANCE (p = 0.005), LINE DANCE and FOXTROT (p = 0.046)
+* SamEn in LT knee flexion was NOT significantly different between any dances (p > 0.1 for all comparisons)
+
+```{r pd_tukey, echo=FALSE}
+print("SamEn_Elbow-LT-Flexion")
+TukeyHSD(df_pd_LT_elbow.aov)
+
+print("SamEn_Hip-RT-Abduction")
+TukeyHSD(df_pd_RT_hip.aov)
+
+print("SamEn_Knee-LT-Flexion")
+TukeyHSD(df_pd_LT_knee.aov)
 ```
