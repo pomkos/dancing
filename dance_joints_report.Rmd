@@ -242,9 +242,9 @@ ggplot(gg2_PD, aes(x=variable, y=value)) +
 
 Is there a significant difference in left vs right SamEn, per Dance_Type?
 
-H0: left_variable = right_variable
+H0: left_variable != right_variable
 
-HA: left_variable > right_variable
+HA: left_variable = right_variable
 
 | p values| Elbow Flexion| Hip Abduction| Hip Rotation| Hip Flexion| Elbow Flexion|
 | --------| ------------ | ------------ | ----------- | ---------- | ------------ |
