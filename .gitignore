@@ -3,3 +3,7 @@
 .RData
 .Ruserdata
 dancing.Rproj
+rsconnect
+*.docx
+*.html
+*.pdf
