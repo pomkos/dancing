@@ -3,7 +3,9 @@ title: "Dance Entropy Analysis"
 author: "Peter Gates"
 date: "10/30/2019"
 output:
-  pdf_document: default
+  pdf_document: 
+    toc: yes
+    toc_depth: 6
   word_document: default
   html_document: default
 ---
@@ -15,8 +17,6 @@ library(ggplot2)
 library(ggthemes)
 df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
 ```
-
-## Dance Study Entropy Analysis
 
 Entropy has been calculated using MatLab code for 176 biomechanical variables measured through the Noraxon system during dance sessions in participants with Parkinson's Disease (PD) and control older adults (OA). This document outlines the statistical results. 
 
@@ -35,7 +35,6 @@ Data was cleaned using the following criteria:
 The cleaned data were saved as df_clean.
 
 df_clean was further separated into PD or OA data, for ease of analysis. These are shown below.
-
 
 ```{r clean, include=FALSE, echo=TRUE}
 df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv"
@@ -100,9 +99,47 @@ df_oa
 
 ### Data Statistics
 
+#### Descriptive Statistics
+
+```{r describe_stats, echo=F}
+library(tidyselect) # needed for peek_vars
+library(formattable) # needed to make pretty tables
+library(kableExtra) # makes pretty tables for PDF
+library(xtable) # makes auto-tables for functions like anova, outputs in latex or html
+df_test <- df_clean 
+df_clean
+df_test <- df_test[-c(8),] # removes a row. It had outlier for Tango Hip Abduction. This df not used for anything, saved for posterity.
+df_clean_stats <- df_clean[-1:-2]
+
+df_clean_desc <-df_clean_stats %>%
+  rename_at(vars(starts_with("SamEn_")), ~str_replace(., "SamEn_", "")) %>% # delete "SamEn_" from column names
+  rename_at(vars(ends_with("(deg)")), ~str_replace(., "\\(deg\\)", "")) %>% # delete "(deg)" from column names
+  group_by(Group, Dance_Type) %>%
+  summarise_all(list(mean), na.rm = TRUE) %>%
+  mutate_if(is.numeric, round, 3) %>% # Round all numbers
+  # Organize columns
+  select(sort(peek_vars())) %>% # sorts columns alphabetically. Peek_Vars returns currently registered variables.
+  select(-c("Elbow-RT-Flexion ", "Hip-RT-Abduction ", "Hip-RT-Flexion ", "Hip-RT-Rotation Ext ", "Knee-RT-Flexion ", "Group"), 
+         c("Elbow-RT-Flexion ", "Hip-RT-Abduction ", "Hip-RT-Flexion ", "Hip-RT-Rotation Ext ", "Knee-RT-Flexion ")) %>% # All rights to end
+  rename_at(vars(ends_with("_fn1")), ~str_replace(., "_fn1", "_mean")) %>%
+  # rename_at(vars(ends_with("_fn3")), ~str_replace(., "_fn3", "_vars")) %>%
+  # Kable function makes pretty table in PDF
+  kable(booktabs = T, linesep = "", longtable = F, caption = "Mean SamEn of Variables per Dance") %>%
+  kable_styling(latex_options = c("striped", "scale_down"), # highlight rows, make table fit page with "scale_down".
+                stripe_index = c(3,7)) %>% # which rows to highlight 
+  add_header_above(c(" " = 2, "Left Side" = 5, "Right Side" = 5)) %>%
+  pack_rows("Older Adults Group", 1, 4) %>%
+  pack_rows("Parkinson's Disease Group", 5,8) %>%
+  column_spec(1:12, width = "5em") %>%
+  footnote(general = "OA group was all female, PD group was all male.")
+
+fm2 <- lm(`SamEn_Elbow-LT-Flexion (deg)` ~ Dance_Type, data = df_clean)
+
+df_clean_desc
+```
 #### Difference between sides, within dances
 
-The bargraphs below demonstrate that for PD participants Foxtrot had the greatest mean SamEn of both left elbow flexion and left knee flexion, reenforcing our findings from the TukeyHSD run above.
+The plots below demonstrate that for PD participants Foxtrot had the greatest mean SamEn of both left elbow flexion and left knee flexion, reenforcing our findings from the TukeyHSD run above.
 
 PD participants also tended to show greater mean right hip abduction SamEn when compared to OA participants.
 
@@ -137,7 +174,7 @@ meltdf_pd_tango <- melt(df_clean2_pd_tango)
 pairwise.t.test(meltdf_pd_tango$value, meltdf_pd_tango$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 0.02333
-  # Hip_Abduction: 4.6e-07
+  # Hip_Abduction: 4.6e-07 (2.0e-13 without outlier)
   # Hip_Rotation:  9.6e-05
   # Hip_Flexion:   0.71698
   # Knee_Flexion:  0.47055
@@ -183,11 +220,11 @@ pairwise.t.test(meltdf_pd_waltz$value, meltdf_pd_waltz$variable, p.adjust = "non
 
 ```
 
+###### PD Plot
 
 ```{r pd_face_bars, echo=FALSE}
 library(reshape2) # for melt(...) function
 library(ggsignif) # for adding sig label to ggplot2
-
 
 df_clean2 <- df_clean[-1:-2]
 gg <- melt(df_clean2,id=c("Group","Dance_Type"))   #turns all variables into observations
@@ -215,7 +252,7 @@ pd_signif_annotate <- data.frame(Dance_Type = c("Tango",
                                  label = c("0.023", "0.025", "  NS ", "0.084",  " NS  ", 
                                             "0.006",  "<0.0001", " NS  ", "< 0.0001", "0.006 ")
                                  )
-ggplot(gg2_PD, aes(x=variable, y=value)) + 
+my_graph<- ggplot(gg2_PD, aes(x=variable, y=value)) + 
   geom_point(position=pos, aes(color = Side)) + 
   geom_vline(xintercept = 1.5) +
   geom_vline(xintercept = 2.5) +
@@ -236,6 +273,9 @@ ggplot(gg2_PD, aes(x=variable, y=value)) +
               textsize = 2.5,
               vjust = -0.04,
               manual = TRUE)
+
+
+my_graph
 ```
 
 ##### OA left v right side
@@ -273,6 +313,8 @@ pairwise.t.test(meltdf_oa_tango$value, meltdf_oa_tango$variable, p.adjust = "non
   # Knee_Flexion:  0.89776
 
 ```
+
+###### OA Plot
 
 ```{r oa_face_bars, echo=FALSE}
 ## OA
@@ -396,6 +438,25 @@ knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) +
                      labels = c("Right Knee Flexion", "Left Knee Flexion"),
                      values = c("red","black")) +
   facet_wrap(~ Group)
+
+# EXPERIMENTATION for auto-p values (instead of method currentl used for PD and OA Plots)
+my_p <- list(c("Foxtrot", "Tango"))
+pub_graph <- ggplot(gg2_PD, aes(x = Dance_Type, y = value)) +
+  geom_point(position = pos, aes(color = Side)) +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.3)
+
+pub_graph +
+  stat_compare_means(comparisons = my_p, label = "p.format", method = "wilcox.test")
+
+library(ggpubr) # Easier to make graphs. Needed for stat_compare_means
+ggerrorplot(gg2_PD, "Dance_Type", "value", 
+            desc_stat = "mean_sd",
+            add = "jitter",
+            add.params = list(color = "Side")) +
+  stat_compare_means(comparisons = my_p)
 
 ```
 #### Difference amongst dances
