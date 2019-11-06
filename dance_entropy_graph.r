@@ -257,3 +257,104 @@ ggsave(filename = "SamEn_oa_hip.pdf",
        plot = oa_hip_plt, 
        path = graph_path,
        device = "pdf")
+
+# Old code from dance_joints_report.Rmd
+# <!-- Plotted below are the SamEn of those variables that proved to be significantly different between dances in PD participants. Next to each plot is the OA equivalent. From here we can see that: -->
+#   
+#   <!-- * PD participants had a much wider range in SamEn of left hip abduction than OA participants during Tango -->
+#   <!-- * Both PD and OA participants had lower SamEn of left elbow flexion than right elbow flexion -->
+#   <!-- * PD participants had a wider range in SamEn of left knee flexion than OA participants during Tango -->
+#   
+#   ```{r graphs_dot, echo=FALSE, include=FALSE}
+
+library(ggrepel)
+pos <- position_jitter(width = 0.5, seed = 2) # standardizes randomness
+
+elbow_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Elbow-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Elbow-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of Elbow Flexion",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Elbow Flexion", "Left Elbow Flexion"),
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
+
+hip_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Hip-RT-Abduction (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Hip-LT-Abduction (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of Hip Abduction",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Hip Abduction", "Left Hip Abduction"),
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
+
+knee_plt <- ggplot(df_clean, aes(x = Dance_Type)) + 
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Knee-RT-Flexion (deg)`,
+                 color = "6532")
+  ) +
+  geom_point(position = pos,
+             aes(y = df_clean$`SamEn_Knee-LT-Flexion (deg)`,
+                 color = "8965"),
+  ) +
+  labs(title = "SamEn of Knee Flexion",
+       x = "Dance Types", 
+       y = "SamEn") +
+  theme(plot.title = element_text(hjust = 0.55),
+        legend.position = "right") +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.2) +
+  scale_color_manual(name = "Location",
+                     labels = c("Right Knee Flexion", "Left Knee Flexion"),
+                     values = c("red","black")) +
+  facet_wrap(~ Group)
+
+# EXPERIMENTATION for auto-p values (instead of method currentl used for PD and OA Plots)
+my_p <- list(c("Foxtrot", "Tango"))
+pub_graph <- ggplot(gg2_PD, aes(x = Dance_Type, y = value)) +
+  geom_point(position = pos, aes(color = Side)) +
+  geom_vline(xintercept = 1.5) +
+  geom_vline(xintercept = 2.5) +
+  geom_vline(xintercept = 3.5) +
+  ylim(0,0.3)
+
+pub_graph +
+  stat_compare_means(comparisons = my_p, label = "p.format", method = "wilcox.test")
+
+ggerrorplot(gg2_PD, "Dance_Type", "value", 
+            desc_stat = "mean_sd",
+            add = "jitter",
+            add.params = list(color = "Side")) +
+  stat_compare_means(comparisons = my_p)
+
+```
