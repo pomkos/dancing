@@ -374,6 +374,8 @@ df_clean_pca <- df_clean_pca[complete.cases(df_clean_pca),]
 df_clean.pca <- prcomp(df_clean_pca, center = TRUE,scale. = TRUE, rank. = 5)
 summary(df_clean.pca)
 
+xtable(df_clean.pca)
+
 df_clean2 <- df_clean[complete.cases(df_clean),]
 ggbiplot(df_clean.pca, labels = df_clean2$Dance_Type, groups = df_clean2$Group, ellipse = TRUE)
 
