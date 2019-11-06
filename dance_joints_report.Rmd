@@ -1,33 +1,39 @@
 ---
 title: "Dance Entropy Analysis"
 author: "Peter Gates"
-date: params$date
+date: "November 6, 2019"
 params:
   date: !r lubridate::today()
 output:
   pdf_document: 
     toc: yes
     toc_depth: 6
+    df_print: kable
   word_document: default
   html_document: default
 ---
 ```{r setup, include=FALSE, echo=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, error = FALSE)
 library(tidyverse)
-library(lubridate) # date time formatting
 library(ggplot2)
 library(ggthemes)
+library(lubridate) # date time formatting
 library(tidyselect) # needed for peek_vars
-library(formattable) # needed to make pretty tables
 library(kableExtra) # makes pretty tables for PDF
 library(xtable) # makes auto-tables for functions like anova, outputs in latex or html
 library(ggpubr) # Easier to make graphs. Needed for stat_compare_means
+library(broom) # converts model results to data.frame
+library(reshape2) # for melt function
+library(ggsignif) # for adding sig label to ggplot2
+
 df <- read_csv("C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/SamEn_joints.csv")
 ```
 
+# Summary
+
 Entropy has been calculated using MatLab code for 176 biomechanical variables measured through the Noraxon system during dance sessions in participants with Parkinson's Disease (PD) and control older adults (OA). This document outlines the statistical results. 
 
-### Data Cleaning
+# Data Cleaning
 
 Data was cleaned using the following criteria:
 
@@ -41,9 +47,9 @@ Data was cleaned using the following criteria:
 
 The cleaned data were saved as df_clean.
 
-df_clean was further separated into PD or OA data, for ease of analysis. These are shown below.
+df_clean was further separated into PD or OA data, for ease of analysis.
 
-```{r clean, include=FALSE, echo=TRUE}
+```{r clean, include=FALSE}
 df_clean_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/clean_samen.csv"
 
 df_clean <- df %>%
@@ -84,35 +90,31 @@ df_clean <- df %>%
 
 df_clean[df_clean == 0] <- NA
 
-write_csv(df_clean, path = df_clean_path)
 ```
 
-```{r separate, include=FALSE, echo=TRUE}
-df_pd_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/pd_samen.csv"
-df_oa_path = "C:/Users/albei/Nextcloud/Documents/PhD/Ridgel Lab/Dance Poster/Entropy Analysis/Data/oa_samen.csv"
+```{r separate, include=FALSE}
 
 df_pd <- df_clean %>%
-  filter(Group == "PD")
-
-df_oa <- df_clean %>%
-  filter(Group == "OA")
-
-```
-
-``` {r heads}
-df_pd %>%
+  filter(Group == "PD") %>%
   rename_at(vars(starts_with("SamEn_")), ~str_replace(., "SamEn_", "")) %>% # delete "SamEn_" from column names
   rename_at(vars(ends_with("(deg)")), ~str_replace(., "\\(deg\\)", "")) %>% # delete "(deg)" from column names
-  kable(booktabs = T, linesep = "", longtable = F, caption = "SamEn of Variables per participant") %>%
-  column_spec(1:12, width = "5em") %>%
-  footnote(general = "OA group was all female, PD group was all male.") 
+  rename_at(vars(ends_with(" ")), ~str_trim(.))
+
+df_oa <- df_clean %>%
+  filter(Group == "OA") %>%
+  rename_at(vars(starts_with("SamEn_")), ~str_replace(., "SamEn_", "")) %>% # delete "SamEn_" from column names
+  rename_at(vars(ends_with("(deg)")), ~str_replace(., "\\(deg\\)", ""))%>% # delete "(deg)" from column names
+  rename_at(vars(ends_with(" ")), ~str_trim(.))
+
 ```
 
-### Data Statistics
+\pagebreak
 
-#### Descriptive Statistics
+# Data Statistics
 
-```{r describe_stats, echo=F}
+## Descriptive Statistics
+
+```{r describe_stats}
 df_test <- df_clean 
 df_test <- df_test[-c(8),] # removes a row. It had outlier for Tango Hip Abduction. This df not used for anything, saved for posterity.
 df_clean_stats <- df_clean[-1:-2]
@@ -120,13 +122,14 @@ df_clean_stats <- df_clean[-1:-2]
 df_clean_desc <-df_clean_stats %>%
   rename_at(vars(starts_with("SamEn_")), ~str_replace(., "SamEn_", "")) %>% # delete "SamEn_" from column names
   rename_at(vars(ends_with("(deg)")), ~str_replace(., "\\(deg\\)", "")) %>% # delete "(deg)" from column names
+  rename_at(vars(ends_with(" ")), ~str_trim(.)) %>%
   group_by(Group, Dance_Type) %>%
   summarise_all(list(mean), na.rm = TRUE) %>%
   mutate_if(is.numeric, round, 3) %>% # Round all numbers
   # Organize columns
   select(sort(peek_vars())) %>% # sorts columns alphabetically. Peek_Vars returns currently registered variables.
-  select(-c("Elbow-RT-Flexion ", "Hip-RT-Abduction ", "Hip-RT-Flexion ", "Hip-RT-Rotation Ext ", "Knee-RT-Flexion ", "Group"), 
-         c("Elbow-RT-Flexion ", "Hip-RT-Abduction ", "Hip-RT-Flexion ", "Hip-RT-Rotation Ext ", "Knee-RT-Flexion ")) %>% # All rights to end
+  select(-c("Elbow-RT-Flexion","Hip-RT-Abduction","Hip-RT-Flexion","Hip-RT-Rotation Ext","Knee-RT-Flexion","Group"), 
+         c("Elbow-RT-Flexion","Hip-RT-Abduction","Hip-RT-Flexion","Hip-RT-Rotation Ext","Knee-RT-Flexion")) %>% # All rights to end
   rename_at(vars(ends_with("_fn1")), ~str_replace(., "_fn1", "_mean")) %>%
   # rename_at(vars(ends_with("_fn3")), ~str_replace(., "_fn3", "_vars")) %>%
   # Kable function makes pretty table in PDF
@@ -139,17 +142,18 @@ df_clean_desc <-df_clean_stats %>%
   column_spec(1:12, width = "5em") %>%
   footnote(general = "OA group was all female, PD group was all male.")
 
-fm2 <- lm(`SamEn_Elbow-LT-Flexion (deg)` ~ Dance_Type, data = df_clean)
-
 df_clean_desc
 ```
-#### Difference between sides, within dances
+
+## Left versus Right, per dance
 
 The plots below demonstrate that for PD participants Foxtrot had the greatest mean SamEn of both left elbow flexion and left knee flexion, reenforcing our findings from the TukeyHSD run above.
 
 PD participants also tended to show greater mean right hip abduction SamEn when compared to OA participants.
 
-##### PD left v right side
+\pagebreak
+
+### PD left v right side
 
 Is there a significant difference in left vs right SamEn, per Dance_Type?
 
@@ -164,19 +168,14 @@ HA: left_variable > right_variable
 
 PD Line and Waltz did not have enough data for a t test.
 
-```{r pd_left_v_right, echo=FALSE, include=FALSE}
-library(reshape2) # for melt function
-
-df_clean2 <- df_clean[-1:-2]
-
-df_clean2_pd <- df_clean2 %>%
-  filter(Group == "PD")
+```{r pd_left_v_right, include=FALSE}
+df_pd_nodate <- df_pd[-1:-2]
 
 ## Tango
-df_clean2_pd_tango <- df_clean2_pd %>%
+df_pd_nodate_tango <- df_pd_nodate %>%
   filter(Dance_Type == "Tango")
 
-meltdf_pd_tango <- melt(df_clean2_pd_tango)
+meltdf_pd_tango <- melt(df_pd_nodate_tango)
 pairwise.t.test(meltdf_pd_tango$value, meltdf_pd_tango$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 0.02333
@@ -186,10 +185,10 @@ pairwise.t.test(meltdf_pd_tango$value, meltdf_pd_tango$variable, p.adjust = "non
   # Knee_Flexion:  0.47055
 
 ## Foxtrot
-df_clean2_pd_foxtrot <- df_clean2_pd %>%
+df_pd_nodate_foxtrot <- df_pd_nodate %>%
   filter(Dance_Type == "Foxtrot")
 
-meltdf_pd_foxtrot <- melt(df_clean2_pd_foxtrot)
+meltdf_pd_foxtrot <- melt(df_pd_nodate_foxtrot)
 pairwise.t.test(meltdf_pd_foxtrot$value, meltdf_pd_foxtrot$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 0.52267
@@ -199,10 +198,10 @@ pairwise.t.test(meltdf_pd_foxtrot$value, meltdf_pd_foxtrot$variable, p.adjust = 
   # Knee_Flexion:  0.00612
 
 ## Line Dance
-df_clean2_pd_line <- df_clean2_pd %>%
+df_pd_nodate_line <- df_pd_nodate %>%
   filter(Dance_Type == "Line Dance")
 
-meltdf_pd_line <- melt(df_clean2_pd_line)
+meltdf_pd_line <- melt(df_pd_nodate_line)
 pairwise.t.test(meltdf_pd_line$value, meltdf_pd_line$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 
@@ -212,10 +211,10 @@ pairwise.t.test(meltdf_pd_line$value, meltdf_pd_line$variable, p.adjust = "none"
   # Knee_Flexion:  
 
 ## Waltz
-df_clean2_pd_waltz <- df_clean2_pd %>%
+df_pd_nodate_waltz <- df_pd_nodate %>%
   filter(Dance_Type == "Waltz")
 
-meltdf_pd_waltz <- melt(df_clean2_pd_waltz)
+meltdf_pd_waltz <- melt(df_pd_nodate_waltz)
 pairwise.t.test(meltdf_pd_waltz$value, meltdf_pd_waltz$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 
@@ -226,17 +225,14 @@ pairwise.t.test(meltdf_pd_waltz$value, meltdf_pd_waltz$variable, p.adjust = "non
 
 ```
 
-###### PD Plot
+#### PD Plot
 
-```{r pd_face_bars, echo=FALSE}
-library(reshape2) # for melt(...) function
-library(ggsignif) # for adding sig label to ggplot2
-
-df_clean2 <- df_clean[-1:-2]
-gg <- melt(df_clean2,id=c("Group","Dance_Type"))   #turns all variables into observations
+```{r pd_face_bars}
+df_pd_melt <- melt(df_pd_nodate,id=c("Group","Dance_Type"))   #turns all variables into observations
 pos <- position_jitter(width = 0.25, seed = 21) # standardizes jitter
+
 ## PD
-gg2_PD <- gg %>%
+df_pd_melt_sides <- df_pd_melt %>%
   # Create Left/Side column
   mutate(Side = str_extract(string = variable, pattern = "-..-")) %>%
   mutate(variable = str_replace(variable, pattern = "-LT-", replacement = "")) %>%
@@ -244,8 +240,7 @@ gg2_PD <- gg %>%
   mutate(variable = str_replace(variable, pattern = "\\(deg\\)", replacement = "")) %>%
   mutate(variable = str_replace(variable, pattern = "SamEn_", replacement = "")) %>%
   mutate(Side = str_replace(Side, pattern = "-LT-", replacement = "Left")) %>%
-  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right")) %>%
-  filter(Group == "PD")
+  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right"))
 
 pd_signif_annotate <- data.frame(Dance_Type = c("Tango", 
                                                 "Foxtrot"),
@@ -258,7 +253,7 @@ pd_signif_annotate <- data.frame(Dance_Type = c("Tango",
                                  label = c("0.023", "0.025", "  NS ", "0.084",  " NS  ", 
                                             "0.006",  "<0.0001", " NS  ", "< 0.0001", "0.006 ")
                                  )
-my_graph<- ggplot(gg2_PD, aes(x=variable, y=value)) + 
+pd_facet_scatter<- ggplot(df_pd_melt_sides, aes(x=variable, y=value)) + 
   geom_point(position=pos, aes(color = Side)) + 
   geom_vline(xintercept = 1.5) +
   geom_vline(xintercept = 2.5) +
@@ -279,12 +274,11 @@ my_graph<- ggplot(gg2_PD, aes(x=variable, y=value)) +
               textsize = 2.5,
               vjust = -0.04,
               manual = TRUE)
-
-
-my_graph
+pd_facet_scatter
 ```
+\pagebreak
 
-##### OA left v right side
+### OA left v right side
 
 Is there a significant difference in left vs right SamEn, per Dance_Type?
 
@@ -298,18 +292,15 @@ HA: left_variable = right_variable
 
 OA Foxtrot, Line and Waltz did not have enough data for a t test.
 
-```{r oa_left_v_right, echo=FALSE, include=FALSE}
+```{r oa_left_v_right, include=FALSE}
 library(reshape2) # for melt function
-df_clean2 <- df_clean[-1:-2]
+df_oa_nodate <- df_oa[-1:-2]
 
-df_clean2_oa <- df_clean2 %>%
-  filter(Group == "OA")
-df_clean2_oa
 ## Tango
-df_clean2_oa_tango <- df_clean2_oa %>%
+df_oa_nodate_tango <- df_oa_nodate %>%
   filter(Dance_Type == "Tango")
 
-meltdf_oa_tango <- melt(df_clean2_oa_tango)
+meltdf_oa_tango <- melt(df_oa_nodate_tango)
 pairwise.t.test(meltdf_oa_tango$value, meltdf_oa_tango$variable, p.adjust = "none")
                   # p_value
   # Elbow_Flexion: 0.29891
@@ -320,11 +311,12 @@ pairwise.t.test(meltdf_oa_tango$value, meltdf_oa_tango$variable, p.adjust = "non
 
 ```
 
-###### OA Plot
+#### OA Plot
 
-```{r oa_face_bars, echo=FALSE}
+```{r oa_face_bars}
 ## OA
-gg2_OA <- gg %>%
+df_oa_melt <- melt(df_oa_nodate,id=c("Group","Dance_Type"))
+df_oa_melt_sides <- df_oa_melt %>%
   # Create Left/Side column
   mutate(Side = str_extract(string = variable, pattern = "-..-")) %>%
   mutate(variable = str_replace(variable, pattern = "-LT-", replacement = "")) %>%
@@ -332,8 +324,7 @@ gg2_OA <- gg %>%
   mutate(variable = str_replace(variable, pattern = "\\(deg\\)", replacement = "")) %>%
   mutate(variable = str_replace(variable, pattern = "SamEn_", replacement = "")) %>%
   mutate(Side = str_replace(Side, pattern = "-LT-", replacement = "Left")) %>%
-  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right")) %>%
-  filter(Group == "OA")
+  mutate(Side = str_replace(Side, pattern = "-RT-", replacement = "Right"))
 
 oa_signif_annotate <- data.frame(Dance_Type = "Tango",
                                  start = c(0.7, 1.7, 2.7, 3.7, 4.7),
@@ -341,7 +332,7 @@ oa_signif_annotate <- data.frame(Dance_Type = "Tango",
                                  y = c(0.075, 0.11, 0.11, 0.15, 0.11),
                                  label = c(" NS", "0.00207", " NS ", "0.01039", "  NS  ")
                                  )
-ggplot(gg2_OA, aes(x=variable, y=value)) + 
+ggplot(df_oa_melt_sides, aes(x=variable, y=value)) + 
   geom_point(position=pos, aes(color = Side)) + 
   geom_vline(xintercept = 1.5) +
   geom_vline(xintercept = 2.5) +
@@ -365,16 +356,40 @@ ggplot(gg2_OA, aes(x=variable, y=value)) +
 
 ```
 
-#### Difference amongst dances
+\pagebreak
+
+## Significant variables, per dance
+
+### PCA Analysis of SamEn
+
+```{r pca_analysis}
+library(ggbiplot) # needed for PCA plotting
+
+df_clean_pca <- df_clean %>%
+  select(c(4:13)) %>%
+  rename_at(vars(starts_with("SamEn_")), ~str_replace(., "SamEn_", "")) %>% # delete "SamEn_" from column names
+  rename_at(vars(ends_with("(deg)")), ~str_replace(., "\\(deg\\)", "")) %>% # delete "(deg)" from column names
+  rename_at(vars(ends_with(" ")), ~str_trim(.)) 
+df_clean_pca <- df_clean_pca[complete.cases(df_clean_pca),]
+df_clean.pca <- prcomp(df_clean_pca, center = TRUE,scale. = TRUE, rank. = 5)
+summary(df_clean.pca)
+
+df_clean2 <- df_clean[complete.cases(df_clean),]
+ggbiplot(df_clean.pca, labels = df_clean2$Dance_Type, groups = df_clean2$Group, ellipse = TRUE)
+
+```
+
+\pagebreak
+
+### Difference overall
 
 A MANOVA was run to determine whether any significant differences exist between dance types in terms of the 10 variables. This turned out to be significant (p < 0.001).
 
-```{r pd_manova_dance, echo=FALSE}
-
-dep_vars <- as.matrix(select(df_pd, ends_with("(deg)")))
+```{r pd_manova_dance}
+dep_vars <- as.matrix(select(df_pd, -c(1,2,3,14)))
 df_pd.man <- manova(dep_vars ~ df_pd$Dance_Type)
 
-summary(df_pd.man, test = "Pillai")
+xtable(df_pd.man, test = "Pillai")
 ```
 
 The dependent variables significantly different between dances include:
@@ -383,21 +398,26 @@ The dependent variables significantly different between dances include:
 * SamEn_Hip-RT-Abduction (p < 0.01)
 * SamEn_Knee-LT-Flexion was slightly significant (p < 0.1)
 
+``` {r pd_manova_summary}
+df_pd_LT_elbow.aov <- aov(df_pd$`Elbow-LT-Flexion` ~ df_pd$Dance_Type)
+df_pd_RT_hip.aov <- aov(df_pd$`Hip-RT-Abduction`~ df_pd$Dance_Type)
+df_pd_LT_knee.aov <- aov(df_pd$`Knee-LT-Flexion` ~ df_pd$Dance_Type)
+```
+
 The following only shows the significant results:
 
-``` {r pd_manova_summary, echo=FALSE}
-# summary.aov(df_pd.man)
+***SamEn of Left Elbow Flexion among all dances***
+`r xtable(df_pd_LT_elbow.aov)`
 
-print("SamEn_Elbow-LT-Flexion")
-df_pd_LT_elbow.aov <- aov(df_pd$`SamEn_Elbow-LT-Flexion (deg)` ~ df_pd$Dance_Type)
-summary.aov(df_pd_LT_elbow.aov)
-print("SamEn_Hip-RT-Abduction")
-df_pd_RT_hip.aov <- aov(df_pd$`SamEn_Hip-RT-Abduction (deg)`~ df_pd$Dance_Type)
-summary.aov(df_pd_RT_hip.aov)
-print("SamEn_Knee-LT-Flexion")
-df_pd_LT_knee.aov <- aov(df_pd$`SamEn_Knee-LT-Flexion (deg)` ~ df_pd$Dance_Type)
-summary.aov(df_pd_LT_knee.aov)
-```
+***SamEn of Right Hip Abduction among all dances***
+`r xtable(df_pd_RT_hip.aov)`
+
+***SamEn of Left Knee Flexion among all dances***
+`r xtable(df_pd_LT_knee.aov)`
+
+\pagebreak
+
+### Difference per variable
 
 TukeyHSD was run to determine which dances saw the significant difference in the appropriate SamEn. 
 
@@ -405,13 +425,11 @@ TukeyHSD was run to determine which dances saw the significant difference in the
 * SamEn in RT hip abduction was significantly different between TANGO and LINE DANCE (p = 0.005), LINE DANCE and FOXTROT (p = 0.046)
 * SamEn in LT knee flexion was NOT significantly different between any dances (p > 0.1 for all comparisons)
 
-```{r pd_tukey, echo=FALSE}
-print("SamEn_Elbow-LT-Flexion")
-TukeyHSD(df_pd_LT_elbow.aov)
+***SamEn of Left Elbow Flexion***
+`r tidy(TukeyHSD(df_pd_LT_elbow.aov))`
 
-print("SamEn_Hip-RT-Abduction")
-TukeyHSD(df_pd_RT_hip.aov)
+***SamEn of Right Hip Abduction***
+`r tidy(TukeyHSD(df_pd_RT_hip.aov))`
 
-print("SamEn_Knee-LT-Flexion")
-TukeyHSD(df_pd_LT_knee.aov)
-```
+***SamEn of Left Knee Flexion***
+`r tidy(TukeyHSD(df_pd_LT_knee.aov))`
